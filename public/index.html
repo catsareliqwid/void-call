@@ -1,4 +1,4 @@
-
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -58,7 +58,7 @@ $("subtitle").textContent=subtitles[Math.floor(Math.random()*subtitles.length)];
 let profile={name:"you",image:"",emoji:"👻"},clicks=0,muted=false,cameraOn=false,speakerOn=true,sharing=false;
 let peer=null,roomId="",hostId="",localStream=null,screenStream=null,outgoingStream=null;
 let connections=new Map(),calls=new Map(),members=new Map(),isHost=false,voidTimer=null;
-let audioCtx=null,analyser=null,audioData=null,speakingLoop=null,lastSpeaking=false,lastSpeakingSent=0;
+let audioCtx=null,analyser=null,audioData=null,speakingLoop=null,lastSpeaking=false,lastSpeakingSent=0,remoteAnalyzers=new Map();
 
 function toast(s){$("toast").textContent=s;$("toast").style.display="block";clearTimeout(window.__t);window.__t=setTimeout(()=>$("toast").style.display="none",1800)}
 function avatarMarkup(p,cls="avatar"){return p.image?`<div class="${cls}"><img src="${p.image}" alt=""></div>`:`<div class="${cls}">${p.emoji||"👤"}</div>`}
