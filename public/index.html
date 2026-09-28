@@ -1,4 +1,4 @@
-<!doctype html>
+
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -113,15 +113,20 @@ function renderPeople(){
  for(const p of allMembers()){
   const tile=document.createElement("div");tile.className="tile"+(p.speaking?" speaking":"");tile.dataset.id=p.id;
   const activeVideo=!!p.stream && (p.mediaKind==="camera"||p.mediaKind==="screen");
-  let media=activeVideo?`<video autoplay playsinline class="${p.mediaKind==="screen"?"screen":""}"></video>`:(p.stream?`<audio autoplay playsinline></audio>`:avatarMarkup(p));
+  const hasAudio=!!p.stream;
+  let media=activeVideo
+   ? `<video autoplay playsinline class="${p.mediaKind==="screen"?"screen":""}"></video>`
+   : `${avatarMarkup(p)}${hasAudio?`<audio autoplay playsinline></audio>`:""}`;
   tile.innerHTML=`<div class="video">${media}</div><div class="tilebody"><div class="name"></div><div class="volrow"><span class="small">🔊</span><input class="vol" type="range" min="0" max="100" value="${oldVolumes[p.id]||100}"><span class="small pct">${oldVolumes[p.id]||100}%</span></div></div>`;
   tile.querySelector(".name").innerHTML=safe(p.name)+(p.muted?' <span class="muted">🔇 muted</span>':'');
-  const mediaEl=tile.querySelector("video, audio");
-  if(mediaEl&&p.stream){
-   mediaEl.srcObject=p.stream;
-   if(mediaEl.tagName==="VIDEO")mediaEl.muted=(p.id===peer?.id)||!speakerOn;
-   else mediaEl.volume=(oldVolumes[p.id]||100)/100;
-   const play=mediaEl.play();if(play?.catch)play.catch(()=>{});
+  const mediaEls=tile.querySelectorAll("video, audio");
+  if(p.stream){
+   mediaEls.forEach(mediaEl=>{
+    mediaEl.srcObject=p.stream;
+    if(mediaEl.tagName==="VIDEO")mediaEl.muted=(p.id===peer?.id)||!speakerOn;
+    else mediaEl.volume=(oldVolumes[p.id]||100)/100;
+    const play=mediaEl.play();if(play?.catch)play.catch(()=>{});
+   });
   }
   const sl=tile.querySelector(".vol");
   sl.oninput=()=>{tile.querySelector(".pct").textContent=sl.value+"%";const vv=tile.querySelector("video");const aa=tile.querySelector("audio");if(vv)vv.volume=sl.value/100;if(aa)aa.volume=sl.value/100};
