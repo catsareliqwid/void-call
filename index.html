@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>void call</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#050505;color:#eee;font:15px system-ui,Arial,sans-serif}
+.wrap{max-width:1200px;margin:auto;padding:34px 22px 64px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}
+.logo{font-size:34px;font-weight:800;letter-spacing:-2px}.sub{color:#777;font-size:13px}.status{border:1px solid #292929;padding:8px 11px;border-radius:999px;color:#aaa;font-size:12px}
+.panel{background:#0b0b0b;border:1px solid #222;border-radius:16px;padding:20px;margin-bottom:18px}.section{font-size:11px;color:#777;text-transform:uppercase;letter-spacing:.12em;margin-bottom:10px}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}button,input{font:inherit}button{cursor:pointer}
+.btn{background:#171717;color:#eee;border:1px solid #383838;border-radius:9px;padding:10px 13px}.btn:hover{background:#222}.primary{background:#eee;color:#050505;border-color:#eee}
+input[type=text]{background:#111;color:#eee;border:1px solid #333;border-radius:9px;padding:10px 12px}.field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:180px}.small{font-size:12px;color:#777}
+.profile-preview{display:flex;align-items:center;gap:12px;margin:12px 0}.avatar{width:46px;height:46px;border-radius:50%;background:#202020;border:1px solid #383838;display:grid;place-items:center;overflow:hidden;flex:none;font-size:22px}.avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+#room{display:none}.roomline{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.code{font:12px ui-monospace,monospace;color:#aaa}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}.tile{background:#101010;border:1px solid #252525;border-radius:13px;overflow:visible}.video{height:300px;display:grid;place-items:center;background:radial-gradient(circle,#292929,#0c0c0c 65%);border-radius:13px 13px 0 0;position:relative;overflow:hidden}.video .avatar{width:180px;height:180px;font-size:72px;border-width:2px;position:relative;overflow:hidden}.video .avatar img{width:100%;height:100%;object-fit:cover}.video video{width:180px;height:180px;object-fit:cover;border-radius:50%;background:#000;display:block;box-shadow:0 0 0 1px #333}.video video.screen{width:100%;height:100%;border-radius:0;object-fit:contain;box-shadow:none}.video audio{display:none}
+.tile.speaking .video .avatar,.tile.speaking .video video{outline:3px solid #fff;outline-offset:5px;animation:speaking-ring 1.4s ease-in-out infinite}@keyframes speaking-ring{0%,100%{outline-offset:4px;filter:brightness(1)}50%{outline-offset:8px;filter:brightness(1.12)}}
+.tilebody{padding:17px}.name{font-weight:700;font-size:16px}.muted{font-size:12px;color:#aaa;margin-left:5px}.volrow{display:flex;align-items:center;gap:7px;margin-top:8px}.vol{width:100%;accent-color:#ddd}
+.clickarea{height:340px;border:1px dashed #383838;border-radius:12px;display:grid;place-items:center;overflow:hidden;margin-top:10px;background:#090909;position:relative;padding:12px}.clickarea img{display:none;position:absolute;inset:12px;width:calc(100% - 24px);height:calc(100% - 24px);max-width:none;max-height:none;object-fit:contain;object-position:center;cursor:pointer;user-select:none}.clickarea img.pop{animation:click-pop .24s ease-out;filter:brightness(1.18)}@keyframes click-pop{0%{transform:scale(1)}35%{transform:scale(.96)}100%{transform:scale(1)}}
+.chat-toggle{position:fixed;right:20px;bottom:20px;width:58px;height:58px;border-radius:50%;border:1px solid #444;background:#050505;color:#fff;font-size:27px;display:grid;place-items:center;z-index:21;box-shadow:0 10px 30px #0009}.chat{position:fixed;right:20px;bottom:90px;width:min(380px,calc(100vw - 40px));height:420px;background:#0b0b0b;border:1px solid #2b2b2b;border-radius:15px;box-shadow:0 18px 50px #0009;display:flex;flex-direction:column;z-index:20;opacity:0;visibility:hidden;pointer-events:none;transform:translateY(14px) scale(.97);transform-origin:bottom right;transition:opacity .2s ease,transform .2s ease,visibility .2s}.chat.open{opacity:1;visibility:visible;pointer-events:auto;transform:translateY(0) scale(1)}
+.chat-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #222;font-weight:750}.chat-close{width:30px;height:30px;border-radius:50%;border:1px solid #333;background:#171717;color:#eee;font-size:18px;padding:0}.messages{flex:1;overflow-y:auto;padding:12px}.message{display:flex;gap:9px;margin-bottom:13px}.message .avatar{width:32px;height:32px;font-size:16px}.msgbody{min-width:0}.msgname{font-size:12px;color:#aaa;font-weight:650}.msgtext{margin-top:2px;white-space:pre-wrap;overflow-wrap:anywhere}.chat-form{display:flex;gap:7px;padding:10px;border-top:1px solid #222}.chat-form input{flex:1;min-width:0}.chat-send{padding:9px 11px}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#eee;color:#080808;padding:9px 13px;border-radius:9px;display:none;z-index:40}
+#localVideo{display:none}.video video{width:100%;height:100%;object-fit:cover;border-radius:13px 13px 0 0}
+@media(max-width:520px){.logo{font-size:30px}.grid{grid-template-columns:1fr}.video{height:250px}.video .avatar{width:130px;height:130px;font-size:56px}.clickarea{height:300px}.panel{padding:17px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div><div class="logo">void call</div><div class="sub" id="subtitle">hello</div></div><div class="status" id="status">connecting…</div><div id="serverHint" style="opacity:.65;font-size:12px;margin-top:6px">Connects to the call service only when you create or join a room.</div></header>
+<section class="panel" id="lobby">
+<div class="section">Your profile — set this before joining</div>
+<div class="row"><div class="field"><label class="small">Name</label><input id="nameInput" type="text" maxlength="32" value="" placeholder="Your name"></div><div class="field"><label class="small">Profile picture (optional)</label><input id="profileUpload" type="file" accept="image/*"></div></div>
+<div class="profile-preview"><div class="avatar" id="profilePreview">👻</div><div><b id="previewName">you</b><div class="small">Set your name and picture before entering the room.</div></div></div>
+<div class="section" style="margin-top:18px">Room</div>
+<div class="row"><button class="btn primary" id="create">＋ Create room</button><input id="joinInput" type="text" placeholder="Paste a room link or room code" style="flex:1;min-width:200px"><button class="btn" id="join">Join room</button></div>
+</section>
+
+<section id="room">
+<div class="panel"><div class="roomline"><div><div class="section">Current room</div><div class="code" id="roomCode"></div></div><button class="btn" id="leave">Leave room</button></div></div>
+<div class="panel"><div class="section">People in the room</div><div class="grid" id="people"></div></div>
+<div class="panel"><div class="section">Call controls</div><div class="row"><button class="btn" id="mic">🎤 Mic on</button><button class="btn" id="cam">📷 Camera off</button><button class="btn" id="speaker">🔊 Speakers on</button><button class="btn" id="screen">🖥️ Share screen</button></div><p class="small">Camera is optional. Volume sliders only change how loudly you hear each person.</p></div>
+<div class="panel"><div class="section">Boredom clicker</div><div class="row"><input id="clickerUpload" type="file" accept="image/*"><button class="btn" id="resetClicks">Reset clicks</button><b id="score">0 clicks</b></div><p class="small">Upload an image, then click it to increase the counter.</p><div class="clickarea"><span id="clickerPlaceholder" class="small">Upload an image to start</span><img id="clickerImage" alt="Your boredom clicker image"></div></div>
+</section></div>
+
+<button class="chat-toggle" id="chatToggle" aria-label="Open room chat">💬</button>
+<div class="chat" id="chat"><div class="chat-head"><span>Room chat</span><button class="chat-close" id="chatClose">×</button></div><div class="messages" id="messages"></div><form class="chat-form" id="chatForm"><input id="chatInput" type="text" maxlength="500" placeholder="Type a message…" autocomplete="off"><button class="btn chat-send">Send</button></form></div>
+<div id="toast"></div>
+
+<script>
+(()=>{
+const subtitles=["hello","bye","skibidi dop dop dop yes yes","hello hi okay","hey my name is bryson","i really like to draw","i miss that kind of misery","chatgpt made this btw i didnt do anything 😂","😂😂😂","random emojis","gg freakin ez","poggerz","new capcut pro","hey its me its verity","or legit anything idc"];
+const voidCallLines=["im so gay","i want you crying for me","tiki tiki phonk","im so corny dude","meow","shoutout to liqwid for dealing with my annoying self during the making of this 🙄","make sure to breathe","okay","shut up","we're all brothers in a perfect world","what if the whole world explo- hey what the- BOOM!!!","okay aj we get it you like veeronica oh my godd","h-hey!! its not like i like you or anything!! h-hmph!","im not a dere tsundere","if you're speaking rn you are #gay 😂😂","im feeling tremendous"];
+const $=id=>document.getElementById(id);
+$("subtitle").textContent=subtitles[Math.floor(Math.random()*subtitles.length)];
+
+let profile={name:"you",image:"",emoji:"👻"},clicks=0,muted=false,cameraOn=false,speakerOn=true,sharing=false;
+let peer=null,roomId="",hostId="",localStream=null,screenStream=null,outgoingStream=null;
+let connections=new Map(),calls=new Map(),members=new Map(),isHost=false,voidTimer=null;
+let audioCtx=null,analyser=null,audioData=null,speakingLoop=null,lastSpeaking=false,lastSpeakingSent=0;
+
+function toast(s){$("toast").textContent=s;$("toast").style.display="block";clearTimeout(window.__t);window.__t=setTimeout(()=>$("toast").style.display="none",1800)}
+function avatarMarkup(p,cls="avatar"){return p.image?`<div class="${cls}"><img src="${p.image}" alt=""></div>`:`<div class="${cls}">${p.emoji||"👤"}</div>`}
+function updateProfilePreview(){profile.name=$("nameInput").value.trim()||"you";$("previewName").textContent=profile.name;$("profilePreview").innerHTML=profile.image?`<img src="${profile.image}" alt="">`:profile.emoji}
+$("nameInput").oninput=updateProfilePreview;
+$("profileUpload").onchange=e=>{const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith("image/"))return toast("Choose an image");const r=new FileReader();r.onload=()=>{profile.image=r.result;updateProfilePreview()};r.readAsDataURL(f)};
+
+function safe(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function allMembers(){return [...members.values()]}
+
+function renderPeople(){
+ const oldVolumes={};document.querySelectorAll(".tile").forEach(t=>{oldVolumes[t.dataset.id]=t.querySelector(".vol")?.value||100});
+ $("people").innerHTML="";
+ for(const p of allMembers()){
+  const tile=document.createElement("div");tile.className="tile"+(p.speaking?" speaking":"");tile.dataset.id=p.id;
+  const activeVideo=!!p.stream && (p.mediaKind==="camera"||p.mediaKind==="screen");
+  let media=activeVideo?`<video autoplay playsinline class="${p.mediaKind==="screen"?"screen":""}"></video>`:(p.stream?`<audio autoplay playsinline></audio>`:avatarMarkup(p));
+  tile.innerHTML=`<div class="video">${media}</div><div class="tilebody"><div class="name"></div><div class="volrow"><span class="small">🔊</span><input class="vol" type="range" min="0" max="100" value="${oldVolumes[p.id]||100}"><span class="small pct">${oldVolumes[p.id]||100}%</span></div></div>`;
+  tile.querySelector(".name").innerHTML=safe(p.name)+(p.muted?' <span class="muted">🔇 muted</span>':'');
+  const mediaEl=tile.querySelector("video, audio");
+  if(mediaEl&&p.stream){
+   mediaEl.srcObject=p.stream;
+   if(mediaEl.tagName==="VIDEO")mediaEl.muted=(p.id===peer?.id)||!speakerOn;
+   else mediaEl.volume=(oldVolumes[p.id]||100)/100;
+   const play=mediaEl.play();if(play?.catch)play.catch(()=>{});
+  }
+  const sl=tile.querySelector(".vol");
+  sl.oninput=()=>{tile.querySelector(".pct").textContent=sl.value+"%";const vv=tile.querySelector("video");const aa=tile.querySelector("audio");if(vv)vv.volume=sl.value/100;if(aa)aa.volume=sl.value/100};
+  $("people").appendChild(tile);
+ }
+}
+function setSpeaking(id,on){
+ const p=members.get(id);if(p)p.speaking=on;
+ const tile=document.querySelector(`[data-id="${CSS.escape(id)}"]`);
+ if(tile)tile.classList.toggle("speaking",!!on);
+}
+function upsert(p){
+ const existing=members.get(p.id)||{};
+ members.set(p.id,{...existing,...p});
+ renderPeople();
+ if(p.id!==peer?.id) maybeCall(p.id);
+}
+function remove(id){
+ members.delete(id);
+ const c=connections.get(id);if(c)c.close();connections.delete(id);
+ const call=calls.get(id);if(call)call.close();calls.delete(id);
+ renderPeople();
+}
+function broadcast(msg,except=""){for(const [id,c] of connections){if(id!==except&&c.open)c.send(msg)}}
+function sendToHost(msg){const c=connections.get(hostId);if(c?.open)c.send(msg)}
+
+async function getAudio(){
+ try{
+  const s=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+  return s;
+ }catch(e){toast("Microphone permission was not granted");return new MediaStream()}
+}
+let previewOnly=false;
+function makePreviewPeer(){
+  const id="preview-"+Math.random().toString(36).slice(2,10);
+  return {
+    id, open:true,
+    call(){},
+    connect(){return {on(){}}},
+    destroy(){},
+  };
+}
+let placeholderTrack=null;
+function makePlaceholderTrack(){
+ const c=document.createElement("canvas");c.width=2;c.height=2;const ctx=c.getContext("2d");ctx.fillStyle="#000";ctx.fillRect(0,0,2,2);
+ const stream=c.captureStream(5);return stream.getVideoTracks()[0];
+}
+function rebuildOutgoingStream(){
+ if(!placeholderTrack)placeholderTrack=makePlaceholderTrack();
+ const s=new MediaStream();
+ if(localStream)localStream.getAudioTracks().forEach(t=>s.addTrack(t));
+ if(sharing&&screenStream)screenStream.getAudioTracks().forEach(t=>s.addTrack(t));
+ const active=sharing&&screenStream?screenStream.getVideoTracks()[0]:(cameraOn?localStream?.getVideoTracks()[0]:placeholderTrack);
+ if(active)s.addTrack(active);
+ outgoingStream=s;
+ const me=members.get(peer?.id);
+ if(me){me.stream=(sharing?screenStream:(cameraOn?localStream:null));me.mediaKind=sharing?"screen":(cameraOn?"camera":"profile");renderPeople()}
+}
+function setOutgoingVideoTrack(track){
+ for(const call of calls.values()){
+  const pc=call.peerConnection; if(!pc)continue;
+  const sender=pc.getSenders().find(x=>x.track?.kind==="video");
+  if(sender) sender.replaceTrack(track).catch(()=>{});
+ }
+}
+function addLocal(){
+ members.set(peer.id,{id:peer.id,name:profile.name,image:profile.image,emoji:profile.emoji,muted,stream:null,mediaKind:"profile",speaking:false});
+ rebuildOutgoingStream();
+}
+function maybeCall(id){
+ if(!peer||id===peer.id||!members.has(id)||!outgoingStream)return;
+ if(String(peer.id)>String(id))return;
+ if(calls.has(id))return;
+ callPeer(id);
+}
+function callPeer(id){
+ if(id===peer.id||!outgoingStream)return;
+ const call=peer.call(id,outgoingStream);
+ calls.set(id,call);
+ call.on("stream",stream=>attachRemoteStream(id,stream));
+ call.on("close",()=>{if(calls.get(id)===call)calls.delete(id)});
+ call.on("error",()=>{if(calls.get(id)===call)calls.delete(id)});
+}
+function attachRemoteStream(id,stream){
+ const p=members.get(id);if(!p)return;
+ p.stream=stream;
+ if(!p.mediaKind)p.mediaKind="profile";
+ renderPeople();
+ const tile=document.querySelector(`[data-id="${CSS.escape(id)}"]`);const el=tile?.querySelector("video,audio");
+ if(el){el.srcObject=stream;el.muted=el.tagName==="VIDEO"?!speakerOn:false;const play=el.play();if(play?.catch)play.catch(()=>{})}
+}
+function refreshCall(id){
+ if(id===peer.id)return;
+ const c=calls.get(id);if(c)try{c.close()}catch{}
+ calls.delete(id);
+ if(String(peer.id)<String(id))callPeer(id);else{const c2=connections.get(id);if(c2?.open)c2.send({type:"refresh-call"})}
+}
+function handleConnection(c){
+ connections.set(c.peer,c);
+ c.on("open",()=>c.send({type:"hello",member:{id:peer.id,name:profile.name,image:profile.image,emoji:profile.emoji,muted,mediaKind:members.get(peer.id)?.mediaKind||"profile"}}));
+ c.on("data",data=>{
+  if(data.type==="hello"){
+   if(isHost){
+    for(const p of allMembers()) c.send({type:"member",member:{id:p.id,name:p.name,image:p.image,emoji:p.emoji,muted:p.muted,mediaKind:p.mediaKind||"profile"}});
+    const nm={id:data.member.id,name:data.member.name,image:data.member.image,emoji:data.member.emoji,muted:data.member.muted,mediaKind:data.member.mediaKind||"profile"};
+    upsert(nm);
+    broadcast({type:"member",member:nm},c.peer);
+   }
+  }else if(data.type==="member"){
+   upsert(data.member);
+   if(data.member.id!==peer.id&&!connections.has(data.member.id))connectPeer(data.member.id);
+  }else if(data.type==="leave"){
+   remove(data.id);broadcast(data,c.peer);
+  }else if(data.type==="mute"){
+   const p=members.get(data.id);if(p){p.muted=data.muted;renderPeople()}
+   broadcast(data,c.peer);
+  }else if(data.type==="media"){
+   const p=members.get(data.id);if(p){p.mediaKind=data.kind;renderPeople()}
+   broadcast(data,c.peer);
+  }else if(data.type==="chat"){
+   addMessage(data.message);broadcast(data,c.peer);
+  }else if(data.type==="speak"){
+   setSpeaking(data.id,data.on);broadcast(data,c.peer);
+  }else if(data.type==="refresh-call"){
+   if(String(peer.id)<String(c.peer))refreshCall(c.peer);
+  }else if(data.type==="request-members"&&isHost){
+   for(const p of allMembers())if(p.id!==peer.id)c.send({type:"member",member:{id:p.id,name:p.name,image:p.image,emoji:p.emoji,muted:p.muted,mediaKind:p.mediaKind||"profile"}});
+  }
+ });
+ c.on("close",()=>remove(c.peer));
+ c.on("error",()=>remove(c.peer));
+}
+function connectPeer(id){
+ if(id===peer.id||connections.has(id))return;
+ const c=peer.connect(id,{reliable:true});handleConnection(c);
+}
+
+function setPeerStatus(text){$("status").textContent=text}
+function makePeer(){
+ if(peer){try{peer.destroy()}catch{}}
+ setPeerStatus("connecting…");
+ peer=new Peer(undefined,{
+  debug:0,
+  host:"0.peerjs.com",
+  port:443,
+  path:"/",
+  secure:true,
+  config:{
+   iceServers:[
+    {urls:"stun:stun.l.google.com:19302"},
+    {urls:"stun:stun1.l.google.com:19302"}
+   ]
+  }
+ });
+ peer.on("open",id=>{
+  setPeerStatus("ready");
+ });
+ peer.on("connection",handleConnection);
+ peer.on("call",call=>{
+  call.answer(outgoingStream||new MediaStream());
+  calls.set(call.peer,call);
+  call.on("stream",stream=>attachRemoteStream(call.peer,stream));
+  call.on("close",()=>{if(calls.get(call.peer)===call)calls.delete(call.peer)});
+  call.on("error",()=>{if(calls.get(call.peer)===call)calls.delete(call.peer)});
+ });
+ peer.on("error",e=>{
+  console.error("PeerJS error:",e);
+  setPeerStatus("connection error");
+  toast(e.type==="network" || e.type==="server-error" || e.type==="socket-error"
+    ? "The call server is busy right now. Wait a moment and try again."
+    : "Call connection error: "+(e.type||"try again"));
+ });
+ peer.on("disconnected",()=>{
+  setPeerStatus("disconnected");
+});
+ peer.on("close",()=>setPeerStatus("offline"));
+}
+
+
+function setupSpeakingDetection(){
+ try{
+  if(audioCtx)audioCtx.close();
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  analyser=audioCtx.createAnalyser();analyser.fftSize=512;audioData=new Uint8Array(analyser.fftSize);
+  const src=audioCtx.createMediaStreamSource(localStream);src.connect(analyser);
+  const loop=()=>{
+   if(!analyser)return;
+   analyser.getByteTimeDomainData(audioData);
+   let sum=0;for(let i=0;i<audioData.length;i++){const x=(audioData[i]-128)/128;sum+=x*x}
+   const rms=Math.sqrt(sum/audioData.length);
+   const on=!muted&&rms>.055;
+   if(on!==lastSpeaking || performance.now()-lastSpeakingSent>700){
+    lastSpeaking=on;lastSpeakingSent=performance.now();setSpeaking(peer.id,on);broadcast({type:"speak",id:peer.id,on});
+   }
+   speakingLoop=requestAnimationFrame(loop);
+  };
+  cancelAnimationFrame(speakingLoop);loop();
+ }catch{}
+}
+
+async function startRoom(id,host){
+ roomId=id;isHost=host;hostId=host?id:hostId;
+ $("lobby").style.display="none";$("room").style.display="block";$("status").textContent="room "+id;$("roomCode").textContent=location.origin+location.pathname+"?room="+id;
+ localStream=await getAudio();addLocal();setupSpeakingDetection();
+ if(host){
+  addMessage({name:"void call",emoji:"💬",text:"Welcome to the room!"});
+  startVoidMessages();
+ }else{
+  connectPeer(hostId);
+  setTimeout(()=>sendToHost({type:"request-members"}),1200);
+ }
+ renderPeople();
+ // After roster exchange, each participant connects/calls according to deterministic initiator rule.
+ if(!previewOnly)setTimeout(()=>{for(const p of allMembers())if(p.id!==peer.id){if(!connections.has(p.id))connectPeer(p.id);maybeCall(p.id)}},1800);
+}
+function startVoidMessages(){
+ clearInterval(voidTimer);
+ voidTimer=setInterval(()=>{
+  const x=voidCallLines[Math.floor(Math.random()*voidCallLines.length)];
+  const m={name:"void call",emoji:"💬",text:x};
+  addMessage(m);broadcast({type:"chat",message:m});
+ },900000);
+}
+function addMessage(m){
+ const d=document.createElement("div");d.className="message";d.innerHTML=avatarMarkup(m)+'<div class="msgbody"><div class="msgname"></div><div class="msgtext"></div></div>';
+ d.querySelector(".msgname").textContent=m.name;d.querySelector(".msgtext").textContent=m.text;$("messages").appendChild(d);$("messages").scrollTop=$("messages").scrollHeight;
+}
+async function rebuildAllCalls(){
+ rebuildOutgoingStream();
+ const track=(sharing&&screenStream)?screenStream.getVideoTracks()[0]:(cameraOn?localStream?.getVideoTracks()[0]:placeholderTrack);
+ setOutgoingVideoTrack(track||placeholderTrack);
+ for(const id of members.keys())if(id!==peer.id&&(!calls.has(id)))maybeCall(id);
+}
+
+function leaveRoom(){
+ if(peer&&roomId)broadcast({type:"leave",id:peer.id});
+ clearInterval(voidTimer);cancelAnimationFrame(speakingLoop);speakingLoop=null;
+ for(const c of connections.values())c.close();for(const c of calls.values())c.close();
+ connections.clear();calls.clear();members.clear();
+ if(localStream)localStream.getTracks().forEach(t=>t.stop());if(screenStream)screenStream.getTracks().forEach(t=>t.stop());
+ localStream=null;screenStream=null;outgoingStream=null;if(placeholderTrack){placeholderTrack.stop();placeholderTrack=null}if(audioCtx){audioCtx.close().catch(()=>{});audioCtx=null}roomId="";
+ $("messages").innerHTML="";$("room").style.display="none";$("lobby").style.display="block";$("status").textContent=peer?.open?"ready":"not connected";
+}
+
+$("create").onclick=async()=>{
+ const btn=$("create");
+ updateProfilePreview();
+ btn.disabled=true;btn.textContent="Creating…";
+ const fallbackId="room-"+Math.random().toString(36).slice(2,10);
+ try{
+  // In an embedded preview, open the room immediately so the UI is usable.
+  const embedded=window.top!==window.self;
+  if(embedded){
+   previewOnly=true;
+   peer=makePreviewPeer();
+   await startRoom(peer.id,true);
+   history.replaceState(null,"","?room="+peer.id);
+   toast("Preview room created — live calling needs the published site.");
+   return;
+  }
+  await waitPeerOpen();
+  await startRoom(peer.id,true);
+  history.replaceState(null,"","?room="+peer.id);
+ }catch(e){
+  console.error(e);
+  // If the signaling service is unavailable, still let the user inspect the room.
+  if(!peer?.open){
+   previewOnly=true;
+   peer=makePreviewPeer();
+   await startRoom(peer.id,true);
+   history.replaceState(null,"","?room="+peer.id);
+   toast("Room opened in preview mode; live calling is unavailable here.");
+  }else{
+   toast("Couldn't connect to the call service. Try again in a moment.");
+  }
+ }finally{
+  btn.disabled=false;btn.textContent="＋ Create room";
+ }
+};
+$("join").onclick=async()=>{
+ const btn=$("join");
+ let v=$("joinInput").value.trim();
+ if(!v)return toast("Enter a room link or room code");
+ try{
+  if(v.includes("?room="))v=new URL(v,location.href).searchParams.get("room");
+  btn.disabled=true;btn.textContent="Joining…";
+  const embedded=window.top!==window.self;
+  if(embedded){
+   previewOnly=true;
+   peer=makePreviewPeer();
+   hostId=v;await startRoom(v,false);
+   history.replaceState(null,"","?room="+v);
+   toast("Preview room opened — live calling needs the published site.");
+  }else{
+   await waitPeerOpen();
+   hostId=v;await startRoom(v,false);
+   history.replaceState(null,"","?room="+v);
+  }
+ }catch(e){
+  console.error(e);
+  toast("Couldn't join that room. Check the link/code.");
+ }finally{
+  btn.disabled=false;btn.textContent="Join room";
+ }
+};
+function waitPeerOpen(){
+ return new Promise((resolve,reject)=>{
+  if(peer?.open)return resolve();
+  if(!peer) makePeer();
+  const started=Date.now();
+  const timer=setInterval(()=>{
+   if(peer?.open){clearInterval(timer);resolve();return}
+   if(Date.now()-started>15000){
+    clearInterval(timer);
+    setPeerStatus("not connected");
+    reject(new Error("PeerJS could not connect"));
+   }
+  },100);
+ });
+}
+$("leave").onclick=leaveRoom;
+
+$("mic").onclick=()=>{
+ muted=!muted;$("mic").textContent=muted?"🔇 Mic off":"🎤 Mic on";
+ if(localStream)localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+ const p=members.get(peer.id);if(p){p.muted=muted;renderPeople()}
+ broadcast({type:"mute",id:peer.id,muted});
+};
+
+$("cam").onclick=async()=>{
+ if(cameraOn){
+  cameraOn=false;$("cam").textContent="📷 Camera off";
+  localStream?.getVideoTracks().forEach(t=>t.stop());
+  rebuildOutgoingStream();setOutgoingVideoTrack(placeholderTrack);
+  broadcast({type:"media",id:peer.id,kind:"profile"});return;
+ }
+ try{
+  const v=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:640},facingMode:"user"}});
+  v.getVideoTracks().forEach(t=>localStream.addTrack(t));cameraOn=true;$("cam").textContent="📷 Camera on";
+  rebuildOutgoingStream();setOutgoingVideoTrack(localStream.getVideoTracks()[0]);
+  broadcast({type:"media",id:peer.id,kind:"camera"});
+ }catch(e){toast("Camera not available — you can still use voice chat")}
+};
+$("speaker").onclick=()=>{
+ speakerOn=!speakerOn;$("speaker").textContent=speakerOn?"🔊 Speakers on":"🔇 Speakers off";
+ document.querySelectorAll("video").forEach(v=>v.muted=(v.closest(".tile")?.dataset.id===peer?.id)||!speakerOn);
+};
+
+async function stopScreenShare(){
+ if(!sharing)return;
+ sharing=false;if(screenStream){screenStream.getTracks().forEach(t=>t.stop());screenStream=null}
+ $("screen").textContent="🖥️ Share screen";
+ const track=cameraOn?localStream?.getVideoTracks()[0]:placeholderTrack;
+ rebuildOutgoingStream();setOutgoingVideoTrack(track||placeholderTrack);
+ broadcast({type:"media",id:peer.id,kind:cameraOn?"camera":"profile"});
+}
+$("screen").onclick=async()=>{
+ if(sharing){await stopScreenShare();return}
+ try{
+  screenStream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:30,max:30}},audio:true});sharing=true;$("screen").textContent="🛑 Stop sharing";
+  const track=screenStream.getVideoTracks()[0];if(track)track.onended=()=>stopScreenShare();
+  rebuildOutgoingStream();setOutgoingVideoTrack(track);broadcast({type:"media",id:peer.id,kind:"screen"});toast("Screen sharing started");
+ }catch(e){screenStream=null;sharing=false;toast("Screen sharing cancelled")}
+};
+
+$("clickerUpload").onchange=e=>{
+ const f=e.target.files?.[0];if(!f)return;if(!f.type.startsWith("image/"))return toast("Choose an image");
+ const r=new FileReader();r.onload=()=>{$("clickerImage").src=r.result;$("clickerImage").style.display="block";$("clickerPlaceholder").style.display="none"};r.readAsDataURL(f)
+};
+$("clickerImage").onclick=()=>{clicks++;$("score").textContent=clicks+" click"+(clicks===1?"":"s");const im=$("clickerImage");im.classList.remove("pop");void im.offsetWidth;im.classList.add("pop");setTimeout(()=>im.classList.remove("pop"),260)};
+$("resetClicks").onclick=()=>{clicks=0;$("score").textContent="0 clicks"};
+$("chatToggle").onclick=()=>{$("chat").classList.add("open");$("chatToggle").style.display="none";$("chatInput").focus()};
+$("chatClose").onclick=()=>{$("chat").classList.remove("open");$("chatToggle").style.display="grid"};
+$("chatForm").onsubmit=e=>{e.preventDefault();const text=$("chatInput").value.trim();if(!text)return;const m={...profile,text};addMessage(m);broadcast({type:"chat",message:m});$("chatInput").value=""};
+
+const qs=new URLSearchParams(location.search);if(qs.get("room"))$("joinInput").value=qs.get("room");
+})();
+</script>
+</body>
+</html>
