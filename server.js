@@ -24,7 +24,7 @@ app.get("/health", (_req, res) => {
   });
 });
 
-app.get("*", (req, res, next) => {
+app.get("/{*splat}", (req, res, next) => {
   if (req.path.startsWith("/peerjs") || req.path === "/health") {
     return next();
   }
