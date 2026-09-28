@@ -77,15 +77,19 @@ async function makeProfileImage(file){
     im.onerror=reject;
     im.src=src;
   });
-  const size=256;
+  // Keep profile pictures deliberately tiny so PeerJS data channels stay reliable.
+  const size=128;
   const scale=Math.min(1,size/Math.max(img.naturalWidth,img.naturalHeight));
   const w=Math.max(1,Math.round(img.naturalWidth*scale));
   const h=Math.max(1,Math.round(img.naturalHeight*scale));
   const c=document.createElement("canvas");
   c.width=w;c.height=h;
-  const ctx=c.getContext("2d");
+  const ctx=c.getContext("2d",{alpha:false});
+  ctx.fillStyle="#111";
+  ctx.fillRect(0,0,w,h);
   ctx.drawImage(img,0,0,w,h);
-  try{return c.toDataURL("image/webp",0.78)}catch{return c.toDataURL("image/jpeg",0.78)}
+  // JPEG is widely supported and keeps the data URL small.
+  return c.toDataURL("image/jpeg",0.58);
 }
 $("profileUpload").onchange=async e=>{
   const f=e.target.files?.[0];
